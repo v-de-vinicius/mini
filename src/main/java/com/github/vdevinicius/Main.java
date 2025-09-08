@@ -25,8 +25,8 @@ public class Main {
                         accumulator.write(buffer, 0, inputStream.read(buffer));
                         bodyIndex = getBodyIndex(accumulator.toByteArray(), accumulator.size());
                     }
-                    final var headerBytes = accumulator.toByteArray();
-                    final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes)));
+                    final var requestBytes = accumulator.toByteArray();
+                    final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(requestBytes)));
                     reader.readLine(); // discard first line — HTTP <METHOD> / 1.1
                     final var headers = new HashMap<String, String>();
                     var header = reader.readLine();
@@ -41,8 +41,11 @@ public class Main {
                         }
                         header = reader.readLine();
                     }
+                    final var body = new ByteArrayOutputStream();
+                    // Request bytes might be incomplete if request data can't fit at buffer all at once. Need to refactor to cover this scenario
+                    body.write(requestBytes, bodyIndex, Integer.parseInt(headers.get("content-length")));
                     System.out.println("[mini-http] Starting reading body in position [" + bodyIndex + "]");
-                    outputStream.write("Request readed sucessfully.".getBytes(StandardCharsets.UTF_8));
+                    outputStream.write("HTTP 1.1 / 200 OK".getBytes(StandardCharsets.UTF_8));
                     outputStream.flush();
                 } catch (SocketTimeoutException e) {
                     System.out.println("[mini-http] Socket automatically closed after 5s of inactivity.");
