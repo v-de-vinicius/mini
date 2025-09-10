@@ -1,9 +1,6 @@
 package com.github.vdevinicius;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -19,17 +16,26 @@ public class Main {
                     final var buffer = new byte[8192];
                     final var inputStream = socket.getInputStream();
                     final var outputStream = socket.getOutputStream();
-                    final var accumulator = new ByteArrayOutputStream();
+                    final var headerAccumulator = new ByteArrayOutputStream();
                     var bodyIndex = -1;
                     while (bodyIndex == -1) {
-                        accumulator.write(buffer, 0, inputStream.read(buffer));
-                        bodyIndex = getBodyIndex(accumulator.toByteArray(), accumulator.size());
+                        final var n = inputStream.read(buffer);
+                        if (n == -1) {
+                            throw new IOException("EOF found before the end of headers.");
+                        }
+
+                        headerAccumulator.write(buffer, 0, n);
+
+                        if (headerAccumulator.size() > 32768) {
+                            throw new RuntimeException("Header size greater than 32KiB");
+                        }
+                        bodyIndex = getBodyIndex(headerAccumulator.toByteArray(), headerAccumulator.size());
                     }
-                    final var requestBytes = accumulator.toByteArray();
-                    final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(requestBytes)));
-                    reader.readLine(); // discard first line — HTTP <METHOD> / 1.1
+                    final var requestBytes = headerAccumulator.toByteArray();
+                    final var headerReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(requestBytes)));
+                    headerReader.readLine(); // discard first line — HTTP <METHOD> / 1.1
                     final var headers = new HashMap<String, String>();
-                    var header = reader.readLine();
+                    var header = headerReader.readLine();
                     while (!header.isEmpty()) {
                         final var headerFragments = header.split(":");
                         final var key = headerFragments[0].toLowerCase();
@@ -39,13 +45,21 @@ public class Main {
                         } else {
                             headers.put(key, value);
                         }
-                        header = reader.readLine();
+                        header = headerReader.readLine();
                     }
                     final var body = new ByteArrayOutputStream();
-                    // Request bytes might be incomplete if request data can't fit at buffer all at once. Need to refactor to cover this scenario
-                    body.write(requestBytes, bodyIndex, Integer.parseInt(headers.get("content-length")));
+                    final var already = headerAccumulator.size() - bodyIndex;
+                    if (already > 0) {
+                        body.write(requestBytes, bodyIndex, already);
+                    }
+                    var remaining = Integer.parseInt(headers.get("content-length")) - already;
+                    while (remaining > 0) {
+                        final var n = inputStream.read(buffer, 0, Math.min(buffer.length, remaining));
+                        body.write(buffer, 0, n);
+                        remaining -= n;
+                    }
                     System.out.println("[mini-http] Starting reading body in position [" + bodyIndex + "]");
-                    outputStream.write("HTTP 1.1 / 200 OK".getBytes(StandardCharsets.UTF_8));
+                    outputStream.write("HTTP 1.1 / 200 OK\r\nContent-Length: 0".getBytes(StandardCharsets.UTF_8));
                     outputStream.flush();
                 } catch (SocketTimeoutException e) {
                     System.out.println("[mini-http] Socket automatically closed after 5s of inactivity.");
