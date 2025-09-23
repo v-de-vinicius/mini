@@ -1,4 +1,4 @@
-package com.github.vdevinicius;
+package com.github.vdevinicius.minihttp;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -13,7 +13,7 @@ import java.util.StringJoiner;
 
 import static java.time.format.DateTimeFormatter.*;
 
-public class Main {
+public class Server {
     private static final int MAX_BODY_SIZE = 1024 * 1024;
 
     public static void main(String[] args) {
