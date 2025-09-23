@@ -4,9 +4,14 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
+
+import static java.time.format.DateTimeFormatter.*;
 
 public class Main {
     private static final int MAX_BODY_SIZE = 1024 * 1024;
@@ -109,7 +114,8 @@ public class Main {
                     }
                     System.out.println("[mini-http] Starting reading body in position [" + bodyIndex + "]");
                     // TODO: Finish response utils to improve response building
-                    final var response = ResponseUtils.getResponse(200, "Content-Length: 0", "Connection: close", "\r\n");
+                    final var formatter = ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH).withZone(ZoneOffset.UTC);
+                    final var response = ResponseUtils.getResponse(200, "Content-Length: 0", "Connection: close", "Date: %s".formatted(formatter.format(Instant.now())), "Content-Type: text/plain", "\r\n");
                     outputStream.write(response.getBytes(StandardCharsets.US_ASCII));
                     outputStream.flush();
                 } catch (SocketTimeoutException e) {
