@@ -22,7 +22,7 @@ public class Server {
                     while (bodyIndex == -1) {
                         final var n = inputStream.read(buffer);
                         if (n == -1) {
-                            outputStream.write(Response.builder().status(400).build().getBytes());
+                            outputStream.write(Response.builder().status(400).body("EOF found before end of headers").build().getBytes());
                             outputStream.flush();
                             continue;
                         }
@@ -57,19 +57,19 @@ public class Server {
                     }
 
                     if (headers.containsKey("transfer-encoding")) {
-                        outputStream.write(Response.builder().status(501).build().getBytes());
+                        outputStream.write(Response.builder().status(501).body("transfer encoding strategies are not implemented").build().getBytes());
                         outputStream.flush();
                         continue;
                     }
 
                     if ("100-continue".equals(headers.get("expect"))) {
-                        outputStream.write(Response.builder().status(501).build().getBytes());
+                        outputStream.write(Response.builder().status(501).body("expect header not implemented").build().getBytes());
                         outputStream.flush();
                         continue;
                     }
 
                     if (!headers.containsKey("host")) {
-                        outputStream.write(Response.builder().status(400).build().getBytes());
+                        outputStream.write(Response.builder().status(400).body("host header not present").build().getBytes());
                         outputStream.flush();
                         continue;
                     }
@@ -83,7 +83,7 @@ public class Server {
                                 contentLength = Integer.parseInt(headers.get("content-length"));
                             }
                         } catch (NumberFormatException e) {
-                            outputStream.write(Response.builder().status(400).build().getBytes());
+                            outputStream.write(Response.builder().status(400).body("could not cast content-length header").build().getBytes());
                             outputStream.flush();
                             continue;
                         }
@@ -91,7 +91,7 @@ public class Server {
                     }
 
                     if (contentLength < 0) {
-                        outputStream.write(Response.builder().status(400).build().getBytes());
+                        outputStream.write(Response.builder().status(400).body("negative content length is not allowed").build().getBytes());
                         outputStream.flush();
                         continue;
                     }
@@ -105,7 +105,7 @@ public class Server {
                     while (remaining > 0) {
                         final var n = inputStream.read(buffer, 0, Math.min(buffer.length, remaining));
                         if (n == -1) {
-                            outputStream.write(Response.builder().status(400).build().getBytes());
+                            outputStream.write(Response.builder().status(400).body("EOF found before end of body").build().getBytes());
                             outputStream.flush();
                         }
                         bodyAccumulator.write(buffer, 0, n);
