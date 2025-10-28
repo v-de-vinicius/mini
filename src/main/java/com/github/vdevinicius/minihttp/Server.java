@@ -22,7 +22,7 @@ public class Server {
                     while (bodyIndex == -1) {
                         final var n = inputStream.read(buffer);
                         if (n == -1) {
-                            outputStream.write(Response.builder().status(400).body("EOF found before end of headers").build().getBytes());
+                            outputStream.write(Response.builder().status(400).body("EOF found before the end of headers").build().getBytes());
                             outputStream.flush();
                             continue;
                         }
@@ -105,7 +105,7 @@ public class Server {
                     while (remaining > 0) {
                         final var n = inputStream.read(buffer, 0, Math.min(buffer.length, remaining));
                         if (n == -1) {
-                            outputStream.write(Response.builder().status(400).body("EOF found before end of body").build().getBytes());
+                            outputStream.write(Response.builder().status(400).body("EOF found before the end of body").build().getBytes());
                             outputStream.flush();
                         }
                         bodyAccumulator.write(buffer, 0, n);
