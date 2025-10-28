@@ -19,7 +19,7 @@ public class HttpMessageReaderTest {
         final var bodyBytes = rawBody.getBytes(StandardCharsets.UTF_8).length;
         final var rawMessage = "GET / HTTP/1.1\r\nContent-Length: %d\r\nHost: 127.0.0.1\r\n\r\n%s".formatted(bodyBytes, rawBody);
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageReader(in, 2);
+        final var sut = new HttpMessageReader(in, 1024);
         final var result = sut.read();
         assertThat(rawMessage.getBytes(StandardCharsets.UTF_8)).isEqualTo(result);
     }

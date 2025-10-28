@@ -13,7 +13,9 @@ public class HttpMessageReader {
     private final InputStream in;
     private final ByteArrayOutputStream acc;
 
-    private int bodyStartIndex = -1;
+    private byte matchCount = 0;
+    private byte lastReadByte = 0;
+    private int bytesReadAcc = 0;
 
     public HttpMessageReader(InputStream in, int bufferSize) {
         this.buf = new byte[bufferSize];
@@ -28,6 +30,7 @@ public class HttpMessageReader {
     }
 
     private void readHeaders() throws IOException {
+        var bodyStartIndex = -1;
         while (bodyStartIndex == -1) {
             final var n = this.in.read(this.buf);
             if (n == -1) {
@@ -40,32 +43,49 @@ public class HttpMessageReader {
                 throw new InvalidHttpMessageException("Header size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.REQUEST_HEADER_FIELDS_TOO_LARGE);
             }
 
-            bodyStartIndex = indexOfCRLFCRLF();
+            bodyStartIndex = indexOfCRLFCRLF(n);
         }
     }
 
     private void readBody() throws IOException {
-        var content = this.in.read(this.buf);
-        while (content > 0) {
-            this.acc.write(this.buf, 0, content);
+        var n = this.in.read(this.buf);
+        while (n > 0) {
+            this.acc.write(this.buf, 0, n);
 
             if (this.acc.size() > MAX_BODY_SIZE) {
                 throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
             }
 
-            content = in.read(this.buf);
+            n = this.in.read(this.buf);
         }
     }
 
-    private int indexOfCRLFCRLF() {
-        final var n = acc.toByteArray();
-        final var len = acc.size();
-        if (len < 4) return -1;
+    private int indexOfCRLFCRLF(int bytesRead) {
+        if (bytesRead <= 0) {
+            return -1;
+        }
 
-        for (int i = 0; i <= len - 4; i++) {
-            if (n[i] == 13 && n[i + 1] == 10 && n[i + 2] == 13 && n[i + 3] == 10) {
-                return i + 4;
+        for (byte currByte : this.buf) {
+            if (matchCount == 4) {
+                return bytesReadAcc;
             }
+
+            bytesReadAcc += 1;
+            // If the current byte isn't \r nor \n, proceed to the next iteration.
+            if (currByte != 13 && currByte != 10) {
+                // Reset match count to find \r\n\r\n in another position.
+                matchCount = 0;
+                lastReadByte = 0;
+                continue;
+            }
+
+            if (currByte == 10 && lastReadByte == 13) {
+                matchCount += 1;
+                continue;
+            }
+
+            lastReadByte = currByte;
+            matchCount += 1;
         }
 
         return -1;
