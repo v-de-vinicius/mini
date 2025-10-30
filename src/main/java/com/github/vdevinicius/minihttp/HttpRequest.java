@@ -31,7 +31,7 @@ public record HttpRequest(HttpMethod method,
         return Objects.hash(method, uri, version, headers, Arrays.hashCode(body));
     }
 
-    public String getBodyAsString() throws IOException {
+    public String readBodyAsString() throws IOException {
         final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body)));
         final var builder = new StringBuilder();
         var line = reader.readLine();
