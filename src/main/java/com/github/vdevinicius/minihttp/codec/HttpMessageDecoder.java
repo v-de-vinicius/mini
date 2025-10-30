@@ -1,14 +1,10 @@
 package com.github.vdevinicius.minihttp.codec;
 
-import com.github.vdevinicius.minihttp.HttpMethod;
-import com.github.vdevinicius.minihttp.HttpRequest;
-import com.github.vdevinicius.minihttp.HttpResponseStatus;
-import com.github.vdevinicius.minihttp.InvalidHttpMessageException;
+import com.github.vdevinicius.minihttp.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 
 public final class HttpMessageDecoder {
     private static final int MAX_HEADER_SIZE = 32 * 1024;
@@ -29,41 +25,56 @@ public final class HttpMessageDecoder {
     }
 
     public HttpRequest read() throws IOException {
+        final var builder = HttpRequest.newBuilder();
         readHeaders();
-        final var headerBytes = new ByteArrayInputStream(acc.toByteArray(), 0, headerBytesReadAcc);
-        final var headerReader = new BufferedReader(new InputStreamReader(headerBytes, StandardCharsets.US_ASCII));
-        final var requestLine = headerReader.readLine();
-        final var method = requestLine.split(" ")[0];
+        final var headerBytes = acc.toByteArray();
+        final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes), StandardCharsets.US_ASCII));
+        final var requestLine = reader.readLine().split(" ");
+        builder.uri(requestLine[1])
+                .version(requestLine[requestLine.length-1].split("/")[1]);
         final var headers = new HashMap<String, String>();
-        var header = headerReader.readLine();
+        var header = reader.readLine();
         while (!header.isEmpty()) {
             final var headerFragments = header.split(":", 2);
             final var key = headerFragments[0].trim().toLowerCase();
             final var value = headerFragments.length > 1 ? headerFragments[1].trim() : "";
-            // Set-Cookie header must be treated separately according to RFC 6265 - So we're supporting it as a single value header.
-            if (headers.containsKey(key) && !key.equals("set-cookie")) {
-                headers.put(key, headers.get(key) + "," + value);
-            } else {
-                headers.put(key, value);
-            }
-            header = headerReader.readLine();
+            headers.put(key, value);
+            header = reader.readLine();
         }
-        readBody();
-        return new HttpRequest() {
-            @Override
-            public HttpMethod method() {
-                return HttpMethod.valueOf(method);
-            }
 
-            @Override
-            public Map<String, String> headers() {
-                return headers;
-            }
-        };
-    }
+        if (headers.containsKey("transfer-encoding")) {
+            throw new UnsupportedOperationException("transfer encoding strategies are not implemented");
+        }
 
-    public int getBodyStartIndex() {
-        return headerBytesReadAcc;
+        if ("100-continue".equals(headers.get("expect"))) {
+            throw new UnsupportedOperationException("expect header not implemented");
+        }
+
+        if (!headers.containsKey("host")) {
+            throw new IllegalStateException("host header not present");
+        }
+
+        var contentLength = 0;
+        try {
+            if (headers.containsKey("content-length")) {
+                contentLength = Integer.parseInt(headers.get("content-length"));
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("could not cast content-length header");
+        }
+
+        if (contentLength < 0) {
+            throw new IllegalStateException("negative content length is not allowed");
+        }
+
+        builder.headers(headers);
+
+        readBody(contentLength);
+        final var bodyBytes = new ByteArrayOutputStream();
+        bodyBytes.write(acc.toByteArray(), headerBytesReadAcc, contentLength);
+        builder.method(requestLine[0]);
+        builder.body(bodyBytes.toByteArray());
+        return builder.build();
     }
 
     private void readHeaders() throws IOException {
@@ -84,18 +95,22 @@ public final class HttpMessageDecoder {
         }
     }
 
-    private void readBody() throws IOException {
-        final var remaining = acc.size() - headerBytesReadAcc;
-        // TODO: Add content-length param to not block the inputStream.read method reading only the readable bytes
-        var n = this.in.read(this.buf);
-        while (n > 0) {
+    private void readBody(int contentLength) throws IOException {
+        if (contentLength <= 0) {
+            return;
+        }
+
+        final var already = acc.size() - headerBytesReadAcc;
+        var remaining = contentLength - already;
+        while (remaining > 0) {
+            final var n = this.in.read(this.buf, 0, Math.min(this.buf.length, remaining));
             this.acc.write(this.buf, 0, n);
 
             if (this.acc.size() > MAX_BODY_SIZE) {
                 throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
             }
 
-            n = this.in.read(this.buf);
+            remaining -= n;
         }
     }
 

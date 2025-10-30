@@ -1,5 +1,6 @@
 package com.github.vdevinicius.minihttp.codec;
 
+import com.github.vdevinicius.minihttp.HttpRequest;
 import com.github.vdevinicius.minihttp.InvalidHttpMessageException;
 import org.junit.jupiter.api.Test;
 
@@ -14,23 +15,29 @@ public class HttpMessageDecoderTest {
 
     private static final int BUFFER_SIZE = 1024;
 
-    // TODO: Refactor test case
     @Test
-    void shouldReturnAnArrayOfBytes() throws IOException {
+    void shouldReturnDecodedHttpRequest() throws IOException {
         final var rawBody = "{ \"id\": 123 }";
         final var bodyBytes = rawBody.getBytes(StandardCharsets.UTF_8).length;
         final var rawMessage = "GET / HTTP/1.1\r\nContent-Length: %d\r\nHost: 127.0.0.1\r\n\r\n%s".formatted(bodyBytes, rawBody);
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
         final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         final var result = sut.read();
-        assertThat(rawMessage.getBytes(StandardCharsets.UTF_8)).isEqualTo(result);
+        assertThat(result).isEqualTo(HttpRequest.newBuilder()
+                        .method("GET")
+                        .version("1.1")
+                        .uri("/")
+                        .setHeader("content-length", String.valueOf(bodyBytes))
+                        .setHeader("host", "127.0.0.1")
+                        .body(rawBody.getBytes(StandardCharsets.UTF_8))
+                        .build());
     }
 
     @Test
     void whenHeaderContainsEOFBeforeEnd_thenShouldThrowIOException() {
         final var rawMessage = "GET / HTTP/1.1\r\nContent-Length:";
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageDecoder(in, 1024);
+        final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         assertThrows(EOFException.class, sut::read);
     }
 
