@@ -14,6 +14,7 @@ public class HttpMessageDecoderTest {
 
     private static final int BUFFER_SIZE = 1024;
 
+    // TODO: Refactor test case
     @Test
     void shouldReturnAnArrayOfBytes() throws IOException {
         final var rawBody = "{ \"id\": 123 }";
