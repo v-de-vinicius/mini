@@ -1,12 +1,38 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
-group = 'org.example'
+group = 'com.github.vdevinicius'
 version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+application {
+    mainClass = 'com.github.vdevinicius.minihttp.Main'
+}
+
+tasks.register('fatJar', Jar) {
+    archiveBaseName = "${project.name}"
+    archiveClassifier = 'all'
+
+    from sourceSets.main.output
+    dependsOn configurations.runtimeClasspath
+
+    manifest {
+        attributes(
+                'Main-Class': 'com.github.vdevinicius.minihttp.Main',
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+        )
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {
