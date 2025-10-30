@@ -1,5 +1,6 @@
-package com.github.vdevinicius.minihttp;
+package com.github.vdevinicius.minihttp.codec;
 
+import com.github.vdevinicius.minihttp.InvalidHttpMessageException;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -9,7 +10,7 @@ import java.util.StringJoiner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class HttpMessageReaderTest {
+public class HttpMessageDecoderTest {
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -19,7 +20,7 @@ public class HttpMessageReaderTest {
         final var bodyBytes = rawBody.getBytes(StandardCharsets.UTF_8).length;
         final var rawMessage = "GET / HTTP/1.1\r\nContent-Length: %d\r\nHost: 127.0.0.1\r\n\r\n%s".formatted(bodyBytes, rawBody);
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageReader(in, 1024);
+        final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         final var result = sut.read();
         assertThat(rawMessage.getBytes(StandardCharsets.UTF_8)).isEqualTo(result);
     }
@@ -28,8 +29,8 @@ public class HttpMessageReaderTest {
     void whenHeaderContainsEOFBeforeEnd_thenShouldThrowIOException() {
         final var rawMessage = "GET / HTTP/1.1\r\nContent-Length:";
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageReader(in, 1024);
-        assertThrows(IOException.class, sut::read);
+        final var sut = new HttpMessageDecoder(in, 1024);
+        assertThrows(EOFException.class, sut::read);
     }
 
     @Test
@@ -43,7 +44,7 @@ public class HttpMessageReaderTest {
         joiner.add("");
         final var rawMessage = joiner.toString();
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageReader(in, BUFFER_SIZE);
+        final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         assertThrows(InvalidHttpMessageException.class, sut::read);
     }
 
@@ -59,7 +60,7 @@ public class HttpMessageReaderTest {
         joiner.add("");
         final var rawMessage = joiner.toString();
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
-        final var sut = new HttpMessageReader(in, BUFFER_SIZE);
+        final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         assertThrows(InvalidHttpMessageException.class, sut::read);
     }
 }
