@@ -86,6 +86,7 @@ public final class HttpMessageDecoder {
 
     private void readBody() throws IOException {
         final var remaining = acc.size() - headerBytesReadAcc;
+        // TODO: Add content-length param to not block the inputStream.read method reading only the readable bytes
         var n = this.in.read(this.buf);
         while (n > 0) {
             this.acc.write(this.buf, 0, n);
