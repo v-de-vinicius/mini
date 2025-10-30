@@ -61,11 +61,14 @@ public class HttpMessageDecoderTest {
         final var joiner = new StringJoiner("\r\n");
         joiner.add("GET / HTTP/1.1");
         joiner.add("Host: 127.0.0.1");
-        joiner.add("");
+        final var builder = new StringBuilder();
         for (var i = 0; i < 33000; i++) {
-            joiner.add("Mini-Body-%1$d: %1$d".formatted(i));
+            builder.append("Mini-Body-%1$d: %1$d".formatted(i));
         }
+        final var body = builder.toString();
+        joiner.add("Content-Length: %d".formatted(body.getBytes(StandardCharsets.UTF_8).length));
         joiner.add("");
+        joiner.add(body);
         final var rawMessage = joiner.toString();
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
         final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);

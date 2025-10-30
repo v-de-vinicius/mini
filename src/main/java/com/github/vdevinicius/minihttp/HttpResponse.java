@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 
 import static java.time.format.DateTimeFormatter.ofPattern;
 
-public class Response {
+public record HttpResponse(int status, Map<String, String> headers, String body) {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH).withZone(ZoneOffset.UTC);
     private static final Map<Integer, String> STATUS_DESCRIPTION_MAP = Map.of(
             200, "OK",
@@ -20,16 +20,6 @@ public class Response {
             431, "Request Header Fields Too Large",
             501, "Not Implemented"
     );
-
-    private final int status;
-    private final Map<String, String> headers;
-    private final String body;
-
-    private Response(int status, Map<String, String> headers, String body) {
-        this.status = status;
-        this.headers = headers;
-        this.body = body;
-    }
 
     public static class Builder {
         private int status;
@@ -52,7 +42,7 @@ public class Response {
             return this;
         }
 
-        public Response build() {
+        public HttpResponse build() {
             if (headers == null) {
                 this.headers = new HashMap<>();
             }
@@ -67,7 +57,7 @@ public class Response {
                 this.headers.put("Content-Type", "text/plain");
             }
 
-            return new Response(this.status, this.headers, this.body);
+            return new HttpResponse(this.status, this.headers, this.body);
         }
     }
 
@@ -87,7 +77,7 @@ public class Response {
         return joiner.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    public static Response.Builder builder() {
-        return new Response.Builder();
+    public static HttpResponse.Builder newBuilder() {
+        return new HttpResponse.Builder();
     }
 }

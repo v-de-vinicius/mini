@@ -1,5 +1,9 @@
 package com.github.vdevinicius.minihttp;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +29,17 @@ public record HttpRequest(HttpMethod method,
     @Override
     public int hashCode() {
         return Objects.hash(method, uri, version, headers, Arrays.hashCode(body));
+    }
+
+    public String getBodyAsString() throws IOException {
+        final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body)));
+        final var builder = new StringBuilder();
+        var line = reader.readLine();
+        while (line != null && !line.isEmpty()) {
+            builder.append(line);
+            line = reader.readLine();
+        }
+        return builder.toString();
     }
 
     public static class Builder {

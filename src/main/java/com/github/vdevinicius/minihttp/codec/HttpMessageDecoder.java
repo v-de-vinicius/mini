@@ -100,13 +100,17 @@ public final class HttpMessageDecoder {
             return;
         }
 
+        if (contentLength >= MAX_BODY_SIZE) {
+            throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
+        }
+
         final var already = acc.size() - headerBytesReadAcc;
         var remaining = contentLength - already;
         while (remaining > 0) {
             final var n = this.in.read(this.buf, 0, Math.min(this.buf.length, remaining));
             this.acc.write(this.buf, 0, n);
 
-            if (this.acc.size() > MAX_BODY_SIZE) {
+            if (this.acc.size() >= MAX_BODY_SIZE) {
                 throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
             }
 
