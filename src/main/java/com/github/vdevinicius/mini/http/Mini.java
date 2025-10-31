@@ -1,8 +1,7 @@
 package com.github.vdevinicius.mini.http;
 
 import com.github.vdevinicius.mini.http.codec.decoder.HttpMessageDecoder;
-import com.github.vdevinicius.mini.http.core.Handler;
-import com.github.vdevinicius.mini.http.core.HttpResponse;
+import com.github.vdevinicius.mini.http.core.*;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 import com.github.vdevinicius.mini.http.router.Router;
 import com.github.vdevinicius.mini.http.router.SimpleRouter;
@@ -10,8 +9,10 @@ import com.github.vdevinicius.mini.http.router.SimpleRouter;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 
-public class Mini implements Router<Mini> {
+// TODO: Add tests for delegators
+public class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
     private final SimpleRouter routerDelegator = new SimpleRouter();
+    private final SimpleExceptionHandler exceptionHandlerDelegator = new SimpleExceptionHandler();
 
     private int port = 8080;
 
@@ -74,6 +75,12 @@ public class Mini implements Router<Mini> {
         return this;
     }
 
+    @Override
+    public <E extends Throwable> Mini handleException(Class<E> exceptionClass, ExceptionHandler<E> handler) {
+        exceptionHandlerDelegator.handleException(exceptionClass, handler);
+        return this;
+    }
+
     public void start() {
         try (final var serverSocket = new ServerSocket(this.port)) {
             while (true) {
@@ -82,9 +89,9 @@ public class Mini implements Router<Mini> {
                     final var inputStream = socket.getInputStream();
                     final var outputStream = socket.getOutputStream();
                     final var decoder = new HttpMessageDecoder(inputStream, 8192);
+                    final var request = decoder.read();
+                    final var response = HttpResponse.newBuilder().build();
                     try {
-                        final var request = decoder.read();
-                        final var response = HttpResponse.newBuilder().build();
                         final var matchedRoute = this.routerDelegator.match(request);
                         matchedRoute.handler().handle(request, response);
                         outputStream.write(response.getBytes());
@@ -97,6 +104,12 @@ public class Mini implements Router<Mini> {
                         outputStream.flush();
                     } catch (NoHandlerFoundException e) {
                         outputStream.write(HttpResponse.newBuilder().status(404).body("resource not found").build().getBytes());
+                        outputStream.flush();
+                    } catch (Throwable t) {
+                        @SuppressWarnings("unchecked")
+                        final var handler = (ExceptionHandler<Throwable>) exceptionHandlerDelegator.resolve(t);
+                        handler.handle(t, request, response);
+                        outputStream.write(response.getBytes());
                         outputStream.flush();
                     }
                 } catch (SocketTimeoutException e) {

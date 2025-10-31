@@ -13,6 +13,11 @@ public class Main {
                         res.setBody("unknown exception");
                         res.setStatus(500);
                     }
+                    throw new IllegalCallerException("asojnh");
+                })
+                .handleException(RuntimeException.class, (e, req, res) -> {
+                    res.setBody(e.getMessage());
+                    res.setStatus(500);
                 })
                 .start();
     }
