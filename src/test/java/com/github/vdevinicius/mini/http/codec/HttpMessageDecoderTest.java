@@ -1,7 +1,7 @@
 package com.github.vdevinicius.mini.http.codec;
 
 import com.github.vdevinicius.mini.http.core.HttpRequest;
-import com.github.vdevinicius.mini.http.exception.InvalidHttpMessageException;
+import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 import com.github.vdevinicius.mini.http.codec.decoder.HttpMessageDecoder;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +54,7 @@ public class HttpMessageDecoderTest {
         final var rawMessage = joiner.toString();
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
         final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
-        assertThrows(InvalidHttpMessageException.class, sut::read);
+        assertThrows(MalformedHttpMessageException.class, sut::read);
     }
 
     @Test
@@ -73,6 +73,6 @@ public class HttpMessageDecoderTest {
         final var rawMessage = joiner.toString();
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
         final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
-        assertThrows(InvalidHttpMessageException.class, sut::read);
+        assertThrows(MalformedHttpMessageException.class, sut::read);
     }
 }

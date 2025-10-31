@@ -8,8 +8,10 @@ import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Optional.ofNullable;
+
 public class SimpleRouter implements Router<SimpleRouter>, RouteMatcher {
-    private final Map<RouteKey, Handler> routeMap = new HashMap<>();
+    private final Map<RouteKey, Handler> routes = new HashMap<>();
 
     @Override
     public SimpleRouter get(String path, Handler handler) {
@@ -67,30 +69,32 @@ public class SimpleRouter implements Router<SimpleRouter>, RouteMatcher {
 
     private void addRouteIfNotExistsOrThrowException(HttpMethod method, String path, Handler handler) {
         final var key = new RouteKey(method, path);
-        if (this.routeMap.containsKey(key)) {
+        if (this.routes.containsKey(key)) {
             throw new UnsupportedOperationException("Cannot redeclare an already declared route");
         }
-        this.routeMap.put(key, handler);
+        this.routes.put(key, handler);
     }
 
     @Override
-    public Handler match(HttpRequest req) throws NoHandlerFoundException {
+    public MatchedRoute match(HttpRequest req) throws NoHandlerFoundException {
         // TODO: Normalize request URI (remove query params and fragments)
         final var key = new RouteKey(req.method(), req.uri());
-        var handler = tryMatchStatically(key);
-        if (handler != null) return handler;
-        handler = tryMatchDynamically(key);
-        if (handler != null) return handler;
-        throw new NoHandlerFoundException(req.method(), req.uri());
+        var matchedRoute = tryMatchStatically(key);
+        if (matchedRoute != null) return matchedRoute;
+        matchedRoute = tryMatchDynamically(key);
+        if (matchedRoute != null) return matchedRoute;
+        throw new NoHandlerFoundException(req);
     }
 
-    private Handler tryMatchStatically(RouteKey key) {
-        return this.routeMap.get(key);
+    private MatchedRoute tryMatchStatically(RouteKey key) {
+        return ofNullable(this.routes.get(key))
+                .map(it -> MatchedRoute.of(key.uri(), it))
+                .orElse(null);
     }
 
-    private Handler tryMatchDynamically(RouteKey key) {
+    private MatchedRoute tryMatchDynamically(RouteKey key) {
         final var pathFragments = key.uri().split("/");
-        return this.routeMap.entrySet().stream()
+        return this.routes.entrySet().stream()
                 .filter(it -> key.method().equals(it.getKey().method()))
                 .filter(it -> {
                     final var routePathFragments = it.getKey().uri().split("/");
@@ -98,14 +102,14 @@ public class SimpleRouter implements Router<SimpleRouter>, RouteMatcher {
                         return false;
                     }
                     for (var i = 0; i < pathFragments.length; i++) {
-                        if (!pathFragments[i].equals(routePathFragments[i]) && !pathFragments[i].startsWith("{")) {
+                        if (!pathFragments[i].equals(routePathFragments[i]) && !routePathFragments[i].startsWith("{")) {
                             return false;
                         }
                     }
                     return true;
                 })
                 .findFirst()
-                .map(Map.Entry::getValue)
+                .map(it -> MatchedRoute.of(it.getKey().uri(), it.getValue()))
                 .orElse(null);
     }
 }

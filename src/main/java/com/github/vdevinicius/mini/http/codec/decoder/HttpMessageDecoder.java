@@ -1,9 +1,9 @@
 package com.github.vdevinicius.mini.http.codec.decoder;
 
 import com.github.vdevinicius.mini.http.core.HttpRequest;
-import com.github.vdevinicius.mini.http.core.HttpResponseStatus;
-import com.github.vdevinicius.mini.http.exception.InvalidHttpMessageException;
+import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 
+// TODO: Remove wildcard imports
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -90,7 +90,7 @@ public final class HttpMessageDecoder {
             this.acc.write(this.buf, 0, n);
 
             if (this.acc.size() > MAX_HEADER_SIZE) {
-                throw new InvalidHttpMessageException("Header size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.REQUEST_HEADER_FIELDS_TOO_LARGE);
+                throw new MalformedHttpMessageException("Header size exceeded the maximum permitted size of 32KiB");
             }
 
             bodyStartIndex = indexOfCRLFCRLF(n);
@@ -103,7 +103,7 @@ public final class HttpMessageDecoder {
         }
 
         if (contentLength >= MAX_BODY_SIZE) {
-            throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
+            throw new MalformedHttpMessageException("Body size exceeded the maximum permitted size of 32KiB");
         }
 
         final var already = acc.size() - headerBytesReadAcc;
@@ -113,7 +113,7 @@ public final class HttpMessageDecoder {
             this.acc.write(this.buf, 0, n);
 
             if (this.acc.size() >= MAX_BODY_SIZE) {
-                throw new InvalidHttpMessageException("Body size exceeded the maximum permitted size of 32KiB", HttpResponseStatus.PAYLOAD_TOO_LARGE);
+                throw new MalformedHttpMessageException("Body size exceeded the maximum permitted size of 32KiB");
             }
 
             remaining -= n;

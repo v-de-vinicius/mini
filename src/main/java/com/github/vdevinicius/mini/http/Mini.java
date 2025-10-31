@@ -85,8 +85,8 @@ public class Mini implements Router<Mini> {
                     try {
                         final var request = decoder.read();
                         final var response = HttpResponse.newBuilder().build();
-                        final var handler = this.routerDelegator.match(request);
-                        handler.handle(request, response);
+                        final var matchedRoute = this.routerDelegator.match(request);
+                        matchedRoute.handler().handle(request, response);
                         outputStream.write(response.getBytes());
                         outputStream.flush();
                     } catch (UnsupportedOperationException e) {

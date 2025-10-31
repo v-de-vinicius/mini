@@ -27,25 +27,25 @@ public class SimpleRouterTest {
                 .uri("/v1/handler")
                 .build();
         sut.get("/v1/handler", NOOP_HANDLER);
-        assertEquals(NOOP_HANDLER, sut.match(req));
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler", result.matchedUri());
     }
 
     @Test
     void shouldMatchDynamicGetRoute() throws NoHandlerFoundException {
         final var req = HttpRequest.newBuilder()
                 .method("GET")
-                .uri("/v1/handler/{handler_id}")
+                .uri("/v1/handler/1234")
                 .build();
-        sut.get("/v1/handler/1234", NOOP_HANDLER);
-        assertEquals(NOOP_HANDLER, sut.match(req));
+        sut.get("/v1/handler/{handler_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler/{handler_id}", result.matchedUri());
     }
 
     @Test
     void whenGetHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
-        final var req = HttpRequest.newBuilder()
-                .method("GET")
-                .uri("/v1/handler/{handler_id}")
-                .build();
         sut.get("/v1/handler", NOOP_HANDLER);
         assertThrows(UnsupportedOperationException.class, () -> sut.get("/v1/handler", NOOP_HANDLER));
     }
@@ -57,6 +57,237 @@ public class SimpleRouterTest {
                 .uri("/v1/handler")
                 .build();
         sut.post("/v1/handler", NOOP_HANDLER);
-        assertEquals(NOOP_HANDLER, sut.match(req));
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicPostRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("POST")
+                .uri("/v1/handler/1234")
+                .build();
+        sut.post("/v1/handler/{handler_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler/{handler_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenPostHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.post("/v1/handler", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.post("/v1/handler", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticPutRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("PUT")
+                .uri("/v1/handler")
+                .build();
+        sut.put("/v1/handler", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicPutRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("PUT")
+                .uri("/v1/handler/1234")
+                .build();
+        sut.put("/v1/handler/{handler_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler/{handler_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenPutHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.put("/v1/handler", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.put("/v1/handler", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticPatchRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("PATCH")
+                .uri("/v1/handler")
+                .build();
+        sut.patch("/v1/handler", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicPatchRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("PATCH")
+                .uri("/v1/handler/1234")
+                .build();
+        sut.patch("/v1/handler/{handler_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/handler/{handler_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenPatchHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.patch("/v1/handler", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.patch("/v1/handler", NOOP_HANDLER));
+    }
+
+
+    @Test
+    void shouldMatchStaticDeleteRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("DELETE")
+                .uri("/v1/resource")
+                .build();
+        sut.delete("/v1/resource", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicDeleteRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("DELETE")
+                .uri("/v1/resource/1234")
+                .build();
+        sut.delete("/v1/resource/{resource_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource/{resource_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenDeleteHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.delete("/v1/resource", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.delete("/v1/resource", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticHeadRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("HEAD")
+                .uri("/v1/resource")
+                .build();
+        sut.head("/v1/resource", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicHeadRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("HEAD")
+                .uri("/v1/resource/1234")
+                .build();
+        sut.head("/v1/resource/{resource_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource/{resource_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenHeadHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.head("/v1/resource", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.head("/v1/resource", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticConnectRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("CONNECT")
+                .uri("/v1/resource")
+                .build();
+        sut.connect("/v1/resource", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicConnectRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("CONNECT")
+                .uri("/v1/resource/1234")
+                .build();
+        sut.connect("/v1/resource/{resource_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource/{resource_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenConnectHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.connect("/v1/resource", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.connect("/v1/resource", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticOptionsRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("OPTIONS")
+                .uri("/v1/resource")
+                .build();
+        sut.options("/v1/resource", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicOptionsRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("OPTIONS")
+                .uri("/v1/resource/1234")
+                .build();
+        sut.options("/v1/resource/{resource_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource/{resource_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenOptionsHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.options("/v1/resource", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.options("/v1/resource", NOOP_HANDLER));
+    }
+
+    @Test
+    void shouldMatchStaticTraceRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("TRACE")
+                .uri("/v1/resource")
+                .build();
+        sut.trace("/v1/resource", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource", result.matchedUri());
+    }
+
+    @Test
+    void shouldMatchDynamicTraceRoute() throws NoHandlerFoundException {
+        final var req = HttpRequest.newBuilder()
+                .method("TRACE")
+                .uri("/v1/resource/1234")
+                .build();
+        sut.trace("/v1/resource/{resource_id}", NOOP_HANDLER);
+        final var result = sut.match(req);
+        assertEquals(NOOP_HANDLER, result.handler());
+        assertEquals("/v1/resource/{resource_id}", result.matchedUri());
+    }
+
+    @Test
+    void whenTraceHandlerIsDeclaredMoreThanOnce_thenShouldThrowUnsupportedOperationException() {
+        sut.trace("/v1/resource", NOOP_HANDLER);
+        assertThrows(UnsupportedOperationException.class, () -> sut.trace("/v1/resource", NOOP_HANDLER));
     }
 }
