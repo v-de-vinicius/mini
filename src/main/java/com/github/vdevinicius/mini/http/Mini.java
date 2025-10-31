@@ -1,8 +1,11 @@
-package com.github.vdevinicius.minihttp;
+package com.github.vdevinicius.mini.http;
 
-import com.github.vdevinicius.minihttp.codec.HttpMessageDecoder;
-import com.github.vdevinicius.minihttp.routing.Router;
-import com.github.vdevinicius.minihttp.routing.SimpleRouter;
+import com.github.vdevinicius.mini.http.codec.decoder.HttpMessageDecoder;
+import com.github.vdevinicius.mini.http.core.Handler;
+import com.github.vdevinicius.mini.http.core.HttpResponse;
+import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
+import com.github.vdevinicius.mini.http.router.Router;
+import com.github.vdevinicius.mini.http.router.SimpleRouter;
 
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;

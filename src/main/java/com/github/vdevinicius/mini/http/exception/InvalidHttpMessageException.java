@@ -1,4 +1,6 @@
-package com.github.vdevinicius.minihttp;
+package com.github.vdevinicius.mini.http.exception;
+
+import com.github.vdevinicius.mini.http.core.HttpResponseStatus;
 
 public class InvalidHttpMessageException extends RuntimeException {
     private final HttpResponseStatus status;

@@ -1,6 +1,9 @@
-package com.github.vdevinicius.minihttp.routing;
+package com.github.vdevinicius.mini.http.router;
 
-import com.github.vdevinicius.minihttp.*;
+import com.github.vdevinicius.mini.http.core.Handler;
+import com.github.vdevinicius.mini.http.core.HttpMethod;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 
 import java.util.HashMap;
 import java.util.Map;

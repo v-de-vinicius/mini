@@ -1,6 +1,6 @@
-package com.github.vdevinicius.minihttp.routing;
+package com.github.vdevinicius.mini.http.router;
 
-import com.github.vdevinicius.minihttp.Handler;
+import com.github.vdevinicius.mini.http.core.Handler;
 
 public interface Router<T> {
     T get(String path, Handler handler);

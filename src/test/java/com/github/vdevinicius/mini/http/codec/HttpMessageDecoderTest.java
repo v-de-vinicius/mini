@@ -1,7 +1,8 @@
-package com.github.vdevinicius.minihttp.codec;
+package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.minihttp.HttpRequest;
-import com.github.vdevinicius.minihttp.InvalidHttpMessageException;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.exception.InvalidHttpMessageException;
+import com.github.vdevinicius.mini.http.codec.decoder.HttpMessageDecoder;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;

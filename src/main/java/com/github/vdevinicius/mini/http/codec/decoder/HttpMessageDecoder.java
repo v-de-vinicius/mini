@@ -1,6 +1,8 @@
-package com.github.vdevinicius.minihttp.codec;
+package com.github.vdevinicius.mini.http.codec.decoder;
 
-import com.github.vdevinicius.minihttp.*;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.HttpResponseStatus;
+import com.github.vdevinicius.mini.http.exception.InvalidHttpMessageException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

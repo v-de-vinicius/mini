@@ -1,4 +1,4 @@
-package com.github.vdevinicius.minihttp;
+package com.github.vdevinicius.mini.http;
 
 public class Main {
     public static void main(String[] args) {
