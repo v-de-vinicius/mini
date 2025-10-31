@@ -1,72 +1,68 @@
 package com.github.vdevinicius.minihttp.routing;
 
-import com.github.vdevinicius.minihttp.HttpMethod;
-import com.github.vdevinicius.minihttp.HttpRequest;
-import com.github.vdevinicius.minihttp.HttpResponse;
-import com.github.vdevinicius.minihttp.NoHandlerFoundException;
+import com.github.vdevinicius.minihttp.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
-public class SimpleRouter implements Router, RouteMatcher {
-    private final Map<RouteKey, BiConsumer<HttpRequest, HttpResponse>> routeMap = new HashMap<>();
+public class SimpleRouter implements Router<SimpleRouter>, RouteMatcher {
+    private final Map<RouteKey, Handler> routeMap = new HashMap<>();
 
     @Override
-    public Router get(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter get(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.GET, path, handler);
         return this;
     }
 
     @Override
-    public Router post(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter post(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.POST, path, handler);
         return this;
     }
 
     @Override
-    public Router put(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter put(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.PUT, path, handler);
         return this;
     }
 
     @Override
-    public Router patch(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter patch(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.PATCH, path, handler);
         return this;
     }
 
     @Override
-    public Router delete(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter delete(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.DELETE, path, handler);
         return this;
     }
 
     @Override
-    public Router head(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter head(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.HEAD, path, handler);
         return this;
     }
 
     @Override
-    public Router connect(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter connect(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.CONNECT, path, handler);
         return this;
     }
 
     @Override
-    public Router options(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter options(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.OPTIONS, path, handler);
         return this;
     }
 
     @Override
-    public Router trace(String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    public SimpleRouter trace(String path, Handler handler) {
         addRouteIfNotExistsOrThrowException(HttpMethod.TRACE, path, handler);
         return this;
     }
 
-    private void addRouteIfNotExistsOrThrowException(HttpMethod method, String path, BiConsumer<HttpRequest, HttpResponse> handler) {
+    private void addRouteIfNotExistsOrThrowException(HttpMethod method, String path, Handler handler) {
         final var key = new RouteKey(method, path);
         if (this.routeMap.containsKey(key)) {
             throw new UnsupportedOperationException("Cannot redeclare an already declared route");
@@ -75,7 +71,8 @@ public class SimpleRouter implements Router, RouteMatcher {
     }
 
     @Override
-    public BiConsumer<HttpRequest, HttpResponse> match(HttpRequest req) throws NoHandlerFoundException {
+    public Handler match(HttpRequest req) throws NoHandlerFoundException {
+        // TODO: Normalize request URI (remove query params and fragments)
         final var key = new RouteKey(req.method(), req.uri());
         var handler = tryMatchStatically(key);
         if (handler != null) return handler;
@@ -84,11 +81,11 @@ public class SimpleRouter implements Router, RouteMatcher {
         throw new NoHandlerFoundException(req.method(), req.uri());
     }
 
-    private BiConsumer<HttpRequest, HttpResponse> tryMatchStatically(RouteKey key) {
+    private Handler tryMatchStatically(RouteKey key) {
         return this.routeMap.get(key);
     }
 
-    private BiConsumer<HttpRequest, HttpResponse> tryMatchDynamically(RouteKey key) {
+    private Handler tryMatchDynamically(RouteKey key) {
         final var pathFragments = key.uri().split("/");
         return this.routeMap.entrySet().stream()
                 .filter(it -> key.method().equals(it.getKey().method()))

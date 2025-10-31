@@ -1,19 +1,17 @@
 package com.github.vdevinicius.minihttp.routing;
 
+import com.github.vdevinicius.minihttp.Handler;
 import com.github.vdevinicius.minihttp.HttpRequest;
-import com.github.vdevinicius.minihttp.HttpResponse;
 import com.github.vdevinicius.minihttp.NoHandlerFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.function.BiConsumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SimpleRouterTest {
 
-    private static final BiConsumer<HttpRequest, HttpResponse> NOOP_HANDLER = (req, res) -> {};
+    private static final Handler NOOP_HANDLER = (req, res) -> {};
 
     private SimpleRouter sut;
 

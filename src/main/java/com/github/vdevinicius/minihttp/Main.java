@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) {
         new Mini()
                 .port(8080)
-                .router(it -> it.post("/graphql", (req, res) -> {
+                .post("/graphql", (req, res) -> {
                     try {
                         res.setBody(req.readBodyAsString());
                         res.getHeaders().put("Content-Type", "application/json");
@@ -13,7 +13,7 @@ public class Main {
                         res.setBody("unknown exception");
                         res.setStatus(500);
                     }
-                }))
+                })
                 .start();
     }
 }

@@ -6,10 +6,9 @@ import com.github.vdevinicius.minihttp.routing.SimpleRouter;
 
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
-import java.util.function.Consumer;
 
-public class Mini {
-    private final SimpleRouter simpleRouter = new SimpleRouter();
+public class Mini implements Router<Mini> {
+    private final SimpleRouter routerDelegator = new SimpleRouter();
 
     private int port = 8080;
 
@@ -18,13 +17,62 @@ public class Mini {
         return this;
     }
 
-    public Mini router(Consumer<Router> consumer) {
-        consumer.accept(this.simpleRouter);
+    @Override
+    public Mini get(String path, Handler handler) {
+        routerDelegator.get(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini post(String path, Handler handler) {
+        routerDelegator.post(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini put(String path, Handler handler) {
+        routerDelegator.put(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini patch(String path, Handler handler) {
+        routerDelegator.patch(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini delete(String path, Handler handler) {
+        routerDelegator.delete(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini head(String path, Handler handler) {
+        routerDelegator.head(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini connect(String path, Handler handler) {
+        routerDelegator.connect(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini options(String path, Handler handler) {
+        routerDelegator.options(path, handler);
+        return this;
+    }
+
+    @Override
+    public Mini trace(String path, Handler handler) {
+        routerDelegator.trace(path, handler);
         return this;
     }
 
     public void start() {
-        try (final var serverSocket = new ServerSocket(8080)) {
+        try (final var serverSocket = new ServerSocket(this.port)) {
             while (true) {
                 try (final var socket = serverSocket.accept()) {
                     socket.setSoTimeout(5000);
@@ -34,8 +82,8 @@ public class Mini {
                     try {
                         final var request = decoder.read();
                         final var response = HttpResponse.newBuilder().build();
-                        final var handler = this.simpleRouter.match(request);
-                        handler.accept(request, response);
+                        final var handler = this.routerDelegator.match(request);
+                        handler.handle(request, response);
                         outputStream.write(response.getBytes());
                         outputStream.flush();
                     } catch (UnsupportedOperationException e) {
