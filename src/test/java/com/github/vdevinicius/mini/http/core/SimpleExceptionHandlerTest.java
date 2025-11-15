@@ -17,8 +17,8 @@ public class SimpleExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleExceptionWithDefinedHandler() {
-        sut.handleException(RuntimeException.class, NOOP_HANDLER);
+    void shouldExceptionCaughtWithDefinedHandler() {
+        sut.exceptionCaught(RuntimeException.class, NOOP_HANDLER);
         final var exception = new RuntimeException("unknown error");
         final var result = sut.resolve(exception);
         assertEquals(NOOP_HANDLER, result);

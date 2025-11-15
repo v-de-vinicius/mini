@@ -1,6 +1,8 @@
 package com.github.vdevinicius.mini.http;
 
-import com.github.vdevinicius.mini.http.codec.decoder.HttpMessageDecoder;
+import com.github.vdevinicius.mini.http.codec.HeadMessageEncoder;
+import com.github.vdevinicius.mini.http.codec.HttpMessageDecoder;
+import com.github.vdevinicius.mini.http.codec.HttpMessageEncoder;
 import com.github.vdevinicius.mini.http.core.*;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 import com.github.vdevinicius.mini.http.router.Router;
@@ -8,11 +10,14 @@ import com.github.vdevinicius.mini.http.router.SimpleRouter;
 
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
+import java.time.Clock;
+import java.util.Map;
 
 // TODO: Add tests for delegators
-public class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
+public class Mini implements Router<Mini>, ExceptionHandlerMapper<Mini> {
     private final SimpleRouter routerDelegator = new SimpleRouter();
     private final SimpleExceptionHandler exceptionHandlerDelegator = new SimpleExceptionHandler();
+    private final Map<HttpMethod, HttpMessageEncoder> encoderMap = Map.of(HttpMethod.HEAD, new HeadMessageEncoder(Clock.systemUTC()));
 
     private int port = 8080;
 
@@ -76,8 +81,8 @@ public class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
     }
 
     @Override
-    public <E extends Throwable> Mini handleException(Class<E> exceptionClass, ExceptionHandler<E> handler) {
-        exceptionHandlerDelegator.handleException(exceptionClass, handler);
+    public <E extends Throwable> Mini exceptionCaught(Class<E> exceptionClass, ExceptionHandler<E> handler) {
+        exceptionHandlerDelegator.exceptionCaught(exceptionClass, handler);
         return this;
     }
 
@@ -94,7 +99,13 @@ public class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
                     try {
                         final var matchedRoute = this.routerDelegator.match(request);
                         matchedRoute.handler().handle(request, response);
-                        outputStream.write(response.getBytes());
+                        final var encoder = encoderMap.getOrDefault(request.method(), new HttpMessageEncoder() {
+                            @Override
+                            public byte[] encode(HttpRequest req, HttpResponse res) {
+                                return res.getBytes();
+                            }
+                        });
+                        outputStream.write(encoder.encode(request, response));
                         outputStream.flush();
                     } catch (UnsupportedOperationException e) {
                         outputStream.write(HttpResponse.newBuilder().status(501).body(e.getMessage()).build().getBytes());
@@ -106,8 +117,7 @@ public class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
                         outputStream.write(HttpResponse.newBuilder().status(404).body("resource not found").build().getBytes());
                         outputStream.flush();
                     } catch (Throwable t) {
-                        @SuppressWarnings("unchecked")
-                        final var handler = (ExceptionHandler<Throwable>) exceptionHandlerDelegator.resolve(t);
+                        final var handler = exceptionHandlerDelegator.resolve(t);
                         handler.handle(t, request, response);
                         outputStream.write(response.getBytes());
                         outputStream.flush();

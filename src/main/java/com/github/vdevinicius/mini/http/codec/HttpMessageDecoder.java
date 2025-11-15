@@ -1,4 +1,4 @@
-package com.github.vdevinicius.mini.http.codec.decoder;
+package com.github.vdevinicius.mini.http.codec;
 
 import com.github.vdevinicius.mini.http.core.HttpRequest;
 import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
