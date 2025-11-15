@@ -1,8 +1,5 @@
 package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.mini.http.core.HttpRequest;
-import com.github.vdevinicius.mini.http.core.HttpResponse;
-
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +13,7 @@ public abstract class AbstractHttpMessageEncoder implements HttpMessageEncoder {
     protected static final Map<Integer, String> STATUS_DESCRIPTION_MAP = Map.of(
             100, "Continue",
             200, "OK",
+            204, "No Content",
             400, "Bad Request",
             404, "Not Found",
             413, "Payload Too Large",
