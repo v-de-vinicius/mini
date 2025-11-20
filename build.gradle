@@ -3,14 +3,14 @@ plugins {
     id 'application'
 }
 
-group = 'com.github.vdevinicius'
+group = 'com.github.vdevinicius.mini'
 version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
 }
 application {
-    mainClass = 'com.github.vdevinicius.minihttp.Main'
+    mainClass = 'com.github.vdevinicius.mini.http.Main'
 }
 
 tasks.register('fatJar', Jar) {

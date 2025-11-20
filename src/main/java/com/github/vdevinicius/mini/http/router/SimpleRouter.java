@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static java.util.Optional.ofNullable;
 
-public class SimpleRouter implements Router<SimpleRouter>, RouteMatcher {
+public class SimpleRouter implements MatchingRouter<SimpleRouter> {
     private final Map<RouteKey, Handler> routes = new HashMap<>();
 
     @Override

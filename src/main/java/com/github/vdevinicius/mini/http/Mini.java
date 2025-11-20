@@ -3,8 +3,16 @@ package com.github.vdevinicius.mini.http;
 import com.github.vdevinicius.mini.http.codec.HeadMessageEncoder;
 import com.github.vdevinicius.mini.http.codec.HttpMessageDecoder;
 import com.github.vdevinicius.mini.http.codec.HttpMessageEncoder;
-import com.github.vdevinicius.mini.http.core.*;
+import com.github.vdevinicius.mini.http.core.ExceptionHandler;
+import com.github.vdevinicius.mini.http.core.ExceptionHandlerMatcher;
+import com.github.vdevinicius.mini.http.core.ExceptionHandlerRegistry;
+import com.github.vdevinicius.mini.http.core.Handler;
+import com.github.vdevinicius.mini.http.core.HttpMethod;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.HttpResponse;
+import com.github.vdevinicius.mini.http.core.SimpleExceptionHandlerMatcher;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
+import com.github.vdevinicius.mini.http.router.MatchingRouter;
 import com.github.vdevinicius.mini.http.router.Router;
 import com.github.vdevinicius.mini.http.router.SimpleRouter;
 
@@ -13,13 +21,22 @@ import java.net.SocketTimeoutException;
 import java.time.Clock;
 import java.util.Map;
 
-// TODO: Add tests for delegators
-public class Mini implements Router<Mini>, ExceptionHandlerMapper<Mini> {
-    private final SimpleRouter routerDelegator = new SimpleRouter();
-    private final SimpleExceptionHandler exceptionHandlerDelegator = new SimpleExceptionHandler();
+// TODO: Implement graceful shutdown
+public final class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
+    private final MatchingRouter<?> router;
+    private final ExceptionHandlerMatcher<?> exceptionHandlerMatcher;
     private final Map<HttpMethod, HttpMessageEncoder> encoderMap = Map.of(HttpMethod.HEAD, new HeadMessageEncoder(Clock.systemUTC()));
 
     private int port = 8080;
+
+    Mini(MatchingRouter<?> router, ExceptionHandlerMatcher<?> exceptionHandlerMatcher) {
+        this.router = router;
+        this.exceptionHandlerMatcher = exceptionHandlerMatcher;
+    }
+
+    public static Mini newServer() {
+        return new Mini(new SimpleRouter(), new SimpleExceptionHandlerMatcher());
+    }
 
     public Mini port(int port) {
         this.port = port;
@@ -28,61 +45,61 @@ public class Mini implements Router<Mini>, ExceptionHandlerMapper<Mini> {
 
     @Override
     public Mini get(String path, Handler handler) {
-        routerDelegator.get(path, handler);
+        router.get(path, handler);
         return this;
     }
 
     @Override
     public Mini post(String path, Handler handler) {
-        routerDelegator.post(path, handler);
+        router.post(path, handler);
         return this;
     }
 
     @Override
     public Mini put(String path, Handler handler) {
-        routerDelegator.put(path, handler);
+        router.put(path, handler);
         return this;
     }
 
     @Override
     public Mini patch(String path, Handler handler) {
-        routerDelegator.patch(path, handler);
+        router.patch(path, handler);
         return this;
     }
 
     @Override
     public Mini delete(String path, Handler handler) {
-        routerDelegator.delete(path, handler);
+        router.delete(path, handler);
         return this;
     }
 
     @Override
     public Mini head(String path, Handler handler) {
-        routerDelegator.head(path, handler);
+        router.head(path, handler);
         return this;
     }
 
     @Override
     public Mini connect(String path, Handler handler) {
-        routerDelegator.connect(path, handler);
+        router.connect(path, handler);
         return this;
     }
 
     @Override
     public Mini options(String path, Handler handler) {
-        routerDelegator.options(path, handler);
+        router.options(path, handler);
         return this;
     }
 
     @Override
     public Mini trace(String path, Handler handler) {
-        routerDelegator.trace(path, handler);
+        router.trace(path, handler);
         return this;
     }
 
     @Override
     public <E extends Throwable> Mini exceptionCaught(Class<E> exceptionClass, ExceptionHandler<E> handler) {
-        exceptionHandlerDelegator.exceptionCaught(exceptionClass, handler);
+        exceptionHandlerMatcher.exceptionCaught(exceptionClass, handler);
         return this;
     }
 
@@ -97,7 +114,7 @@ public class Mini implements Router<Mini>, ExceptionHandlerMapper<Mini> {
                     final var request = decoder.read();
                     final var response = HttpResponse.newBuilder().build();
                     try {
-                        final var matchedRoute = this.routerDelegator.match(request);
+                        final var matchedRoute = this.router.match(request);
                         matchedRoute.handler().handle(request, response);
                         final var encoder = encoderMap.getOrDefault(request.method(), new HttpMessageEncoder() {
                             @Override
@@ -117,7 +134,7 @@ public class Mini implements Router<Mini>, ExceptionHandlerMapper<Mini> {
                         outputStream.write(HttpResponse.newBuilder().status(404).body("resource not found").build().getBytes());
                         outputStream.flush();
                     } catch (Throwable t) {
-                        final var handler = exceptionHandlerDelegator.resolve(t);
+                        final var handler = exceptionHandlerMatcher.match(t);
                         handler.handle(t, request, response);
                         outputStream.write(response.getBytes());
                         outputStream.flush();

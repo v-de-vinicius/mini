@@ -1,10 +1,8 @@
 package com.github.vdevinicius.mini.http;
 
-import java.util.Map;
-
 public class Main {
     public static void main(String[] args) {
-        new Mini()
+        Mini.newServer()
                 .port(8080)
                 .head("/ping", (req, res) -> res.setStatus(204))
                 .start();

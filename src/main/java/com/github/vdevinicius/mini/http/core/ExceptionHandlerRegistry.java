@@ -1,6 +1,5 @@
 package com.github.vdevinicius.mini.http.core;
 
-@FunctionalInterface
-public interface ExceptionHandlerMapper<T> {
+public interface ExceptionHandlerRegistry<T> {
     <E extends Throwable> T exceptionCaught(Class<E> exceptionClass, ExceptionHandler<E> handler);
 }
