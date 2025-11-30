@@ -14,36 +14,26 @@ import static java.time.format.DateTimeFormatter.ofPattern;
 // TODO: This class should be mostly an interface with an underlying implementation which can manipulate response reading/sending.
 public final class HttpResponse {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH).withZone(ZoneOffset.UTC);
-    private static final Map<Integer, String> STATUS_DESCRIPTION_MAP = Map.of(
-            100, "Continue",
-            200, "OK",
-            400, "Bad Request",
-            404, "Not Found",
-            413, "Payload Too Large",
-            431, "Request Header Fields Too Large",
-            501, "Not Implemented"
-    );
 
     public HttpResponse(int status, String body, Map<String, String> headers) {
-        this.status = status;
+        this.responseStatus = HttpResponseStatus.fromInt(status);
         this.body = body;
         this.headers = headers;
     }
 
-    public int getStatus() {
-        return status;
+    public void writeStatus(HttpResponseStatus responseStatus) {
+        this.responseStatus = responseStatus;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
+    public void writeStatus(int responseStatus) {
+        this.responseStatus = HttpResponseStatus.fromInt(responseStatus);
     }
 
     public String getBody() {
         return body;
     }
 
-    public void setBody(String body) {
-        this.headers.put("Content-Length", String.valueOf(body.getBytes(StandardCharsets.UTF_8).length));
+    public void writeBody(String body) {
         this.body = body;
     }
 
@@ -51,11 +41,11 @@ public final class HttpResponse {
         return headers;
     }
 
-    public void setHeaders(Map<String, String> headers) {
-        this.headers = headers;
+    public HttpResponseStatus getResponseStatus() {
+        return responseStatus;
     }
 
-    private int status;
+    private HttpResponseStatus responseStatus;
     private String body;
     private Map<String, String> headers;
 
@@ -103,9 +93,10 @@ public final class HttpResponse {
     public byte[] getBytes() {
         this.headers.put("Date", DATE_TIME_FORMATTER.format(Instant.now()));
         this.headers.put("Connection", "Close");
+        this.headers.put("Content-Length", String.valueOf(this.body.getBytes(StandardCharsets.UTF_8).length));
         final var joiner = new StringJoiner("\r\n");
         final var headerJoiner = new StringJoiner("\r\n");
-        headerJoiner.add("HTTP/1.1 %d %s".formatted(status, STATUS_DESCRIPTION_MAP.get(status)));
+        headerJoiner.add("HTTP/1.1 %d %s".formatted(responseStatus.getIntStatus(), responseStatus.getSimpleDescription()));
         headers.forEach((key, value) -> headerJoiner.add("%s: %s".formatted(key, value)));
         headerJoiner.add("");
         joiner.add(headerJoiner.toString());

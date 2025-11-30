@@ -11,6 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
+
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.verify;
 
@@ -28,6 +32,22 @@ public class MiniTest {
     @BeforeEach
     public void setUp() {
         sut = new Mini(router, exceptionHandlerMatcher);
+    }
+
+    @Test
+    void shouldListenForRequestsInTheConfiguredPort() throws Exception {
+        final var thread = new Thread(() -> sut.port(10000).start());
+        thread.setDaemon(true);
+        thread.start();
+        for (int i = 0; i < 50; i++) {
+            try (final var socket = new Socket()) {
+                socket.connect(new InetSocketAddress("127.0.0.1", 10000), 100);
+                assert true;
+            } catch (Exception e) {
+                Thread.sleep(50);
+            }
+        }
+        fail("Connection timeout exceeded. Not able to connect to the server");
     }
 
     @Nested

@@ -4,7 +4,12 @@ public class Main {
     public static void main(String[] args) {
         Mini.newServer()
                 .port(8080)
-                .head("/ping", (req, res) -> res.setStatus(204))
+                .head("/ping", (req, res) -> res.writeStatus(204))
+                .get("/produce", (req, res) -> {
+                    res.writeStatus(200);
+                    res.getHeaders().put("Content-Type", "application/json");
+                    res.writeBody("{ \"query\": \"product { id, title }\" }");
+                })
                 .start();
     }
 }

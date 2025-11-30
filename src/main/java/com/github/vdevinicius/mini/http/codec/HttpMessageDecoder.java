@@ -21,8 +21,8 @@ public final class HttpMessageDecoder {
     private int headerBytesReadAcc = 0;
 
     public HttpMessageDecoder(InputStream in, int bufferSize) {
-        this.buf = new byte[bufferSize];
         this.in = in;
+        this.buf = new byte[bufferSize];
         this.acc = new ByteArrayOutputStream();
     }
 
