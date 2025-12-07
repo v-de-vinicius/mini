@@ -8,8 +8,8 @@ import com.github.vdevinicius.mini.http.core.ExceptionHandlerMatcher;
 import com.github.vdevinicius.mini.http.core.ExceptionHandlerRegistry;
 import com.github.vdevinicius.mini.http.core.Handler;
 import com.github.vdevinicius.mini.http.core.HttpMethod;
-import com.github.vdevinicius.mini.http.core.HttpRequest;
-import com.github.vdevinicius.mini.http.core.HttpResponse;
+import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
+import com.github.vdevinicius.mini.http.core.MiniHttpResponse;
 import com.github.vdevinicius.mini.http.core.SimpleExceptionHandlerMatcher;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 import com.github.vdevinicius.mini.http.router.MatchingRouter;
@@ -112,26 +112,27 @@ public final class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> 
                     final var outputStream = socket.getOutputStream();
                     final var decoder = new HttpMessageDecoder(inputStream, 8192);
                     final var request = decoder.read();
-                    final var response = HttpResponse.newBuilder().build();
+                    final var response = MiniHttpResponse.newBuilder().build();
                     try {
                         final var matchedRoute = this.router.match(request);
-                        matchedRoute.handler().handle(request, response);
+                        final var req = MiniHttpRequest.of(request, builder -> builder.matchedByRoute(matchedRoute.matchedUri()));
+                        matchedRoute.handler().handle(req, response);
                         final var encoder = encoderMap.getOrDefault(request.method(), new HttpMessageEncoder() {
                             @Override
-                            public byte[] encode(HttpRequest req, HttpResponse res) {
+                            public byte[] encode(MiniHttpRequest req, MiniHttpResponse res) {
                                 return res.getBytes();
                             }
                         });
-                        outputStream.write(encoder.encode(request, response));
+                        outputStream.write(encoder.encode(req, response));
                         outputStream.flush();
                     } catch (UnsupportedOperationException e) {
-                        outputStream.write(HttpResponse.newBuilder().status(501).body(e.getMessage()).build().getBytes());
+                        outputStream.write(MiniHttpResponse.newBuilder().status(501).body(e.getMessage()).build().getBytes());
                         outputStream.flush();
                     } catch (IllegalStateException e) {
-                        outputStream.write(HttpResponse.newBuilder().status(400).body(e.getMessage()).build().getBytes());
+                        outputStream.write(MiniHttpResponse.newBuilder().status(400).body(e.getMessage()).build().getBytes());
                         outputStream.flush();
                     } catch (NoHandlerFoundException e) {
-                        outputStream.write(HttpResponse.newBuilder().status(404).body("resource not found").build().getBytes());
+                        outputStream.write(MiniHttpResponse.newBuilder().status(404).body("resource not found").build().getBytes());
                         outputStream.flush();
                     } catch (Throwable t) {
                         final var handler = exceptionHandlerMatcher.match(t);

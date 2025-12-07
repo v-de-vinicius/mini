@@ -1,6 +1,6 @@
 package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
 import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 import org.junit.jupiter.api.Test;
 
@@ -23,10 +23,10 @@ public class HttpMessageDecoderTest {
         final var in = new ByteArrayInputStream(rawMessage.getBytes(StandardCharsets.UTF_8));
         final var sut = new HttpMessageDecoder(in, BUFFER_SIZE);
         final var result = sut.read();
-        assertThat(result).isEqualTo(HttpRequest.newBuilder()
+        assertThat(result).isEqualTo(MiniHttpRequest.newBuilder()
                         .method("GET")
                         .version("1.1")
-                        .uri("/")
+                        .path("/")
                         .setHeader("content-length", String.valueOf(bodyBytes))
                         .setHeader("host", "127.0.0.1")
                         .body(rawBody.getBytes(StandardCharsets.UTF_8))

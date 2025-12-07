@@ -1,86 +1,14 @@
 package com.github.vdevinicius.mini.http.core;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-public record HttpRequest(HttpMethod method,
-                          String uri,
-                          HttpVersion version,
-                          Map<String, String> headers,
-                          byte[] body) {
-
-    public static Builder newBuilder() {
-        return new Builder();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        HttpRequest that = (HttpRequest) o;
-        return Objects.equals(uri, that.uri) && Arrays.equals(body, that.body) && method == that.method && version == that.version && Objects.equals(headers, that.headers);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(method, uri, version, headers, Arrays.hashCode(body));
-    }
-
-    public String readBodyAsString() throws IOException {
-        final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body)));
-        final var builder = new StringBuilder();
-        var line = reader.readLine();
-        while (line != null && !line.isEmpty()) {
-            builder.append(line);
-            line = reader.readLine();
-        }
-        return builder.toString();
-    }
-
-    public static class Builder {
-        private HttpMethod method;
-        private String uri;
-        private HttpVersion version;
-        private Map<String, String> headers = new HashMap<>();
-        private byte[] body;
-
-        public Builder uri(String uri) {
-            this.uri = uri;
-            return this;
-        }
-
-        public Builder version(String version) {
-            this.version = HttpVersion.valueOf("VERSION_" + version.replace(".", "_"));
-            return this;
-        }
-
-        public Builder setHeader(String key, String value) {
-            this.headers.put(key, value);
-            return this;
-        }
-
-        public Builder headers(Map<String, String> headers) {
-            this.headers = headers;
-            return this;
-        }
-
-        public Builder method(String s) {
-            this.method = HttpMethod.valueOf(s);
-            return this;
-        }
-
-        public Builder body(byte[] body) {
-            this.body = body;
-            return this;
-        }
-
-        public HttpRequest build() {
-            return new HttpRequest(this.method, this.uri, this.version, this.headers, this.body);
-        }
-    }
+public interface HttpRequest {
+    String path();
+    String matchedByPath();
+    HttpMethod method();
+    HttpVersion version();
+    Map<String, String> headers();
+    Map<String, String> queryParams();
+    Map<String, String> pathVariables();
+    byte[] body();
 }

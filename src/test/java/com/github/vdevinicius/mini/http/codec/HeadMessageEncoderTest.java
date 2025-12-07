@@ -1,7 +1,7 @@
 package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.mini.http.core.HttpRequest;
-import com.github.vdevinicius.mini.http.core.HttpResponse;
+import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
+import com.github.vdevinicius.mini.http.core.MiniHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,17 +25,17 @@ public class HeadMessageEncoderTest {
 
     private HeadMessageEncoder sut;
 
-    private HttpRequest.Builder requestBuilder;
-    private HttpResponse.Builder responseBuilder;
+    private MiniHttpRequest.Builder requestBuilder;
+    private MiniHttpResponse.Builder responseBuilder;
 
     @BeforeEach
     public void setUp() {
-        requestBuilder = HttpRequest.newBuilder()
-                .uri("/api/v1")
+        requestBuilder = MiniHttpRequest.newBuilder()
+                .path("/api/v1")
                 .method("GET")
                 .version("1.1")
                 .headers(Map.of("Content-Type", "application/json"));
-        responseBuilder = HttpResponse.newBuilder()
+        responseBuilder = MiniHttpResponse.newBuilder()
                 .status(200);
 
         sut = new HeadMessageEncoder(CLOCK);

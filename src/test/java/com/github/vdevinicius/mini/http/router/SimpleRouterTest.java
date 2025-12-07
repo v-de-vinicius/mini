@@ -1,7 +1,7 @@
 package com.github.vdevinicius.mini.http.router;
 
 import com.github.vdevinicius.mini.http.core.Handler;
-import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +22,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticGetRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("GET")
-                .uri("/v1/handler")
+                .path("/v1/handler")
                 .build();
         sut.get("/v1/handler", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -34,9 +34,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicGetRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("GET")
-                .uri("/v1/handler/1234")
+                .path("/v1/handler/1234")
                 .build();
         sut.get("/v1/handler/{handler_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -52,9 +52,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticPostRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("POST")
-                .uri("/v1/handler")
+                .path("/v1/handler")
                 .build();
         sut.post("/v1/handler", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -64,9 +64,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicPostRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("POST")
-                .uri("/v1/handler/1234")
+                .path("/v1/handler/1234")
                 .build();
         sut.post("/v1/handler/{handler_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -82,9 +82,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticPutRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("PUT")
-                .uri("/v1/handler")
+                .path("/v1/handler")
                 .build();
         sut.put("/v1/handler", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -94,9 +94,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicPutRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("PUT")
-                .uri("/v1/handler/1234")
+                .path("/v1/handler/1234")
                 .build();
         sut.put("/v1/handler/{handler_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -112,9 +112,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticPatchRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("PATCH")
-                .uri("/v1/handler")
+                .path("/v1/handler")
                 .build();
         sut.patch("/v1/handler", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -124,9 +124,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicPatchRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("PATCH")
-                .uri("/v1/handler/1234")
+                .path("/v1/handler/1234")
                 .build();
         sut.patch("/v1/handler/{handler_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -143,9 +143,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticDeleteRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("DELETE")
-                .uri("/v1/resource")
+                .path("/v1/resource")
                 .build();
         sut.delete("/v1/resource", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -155,9 +155,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicDeleteRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("DELETE")
-                .uri("/v1/resource/1234")
+                .path("/v1/resource/1234")
                 .build();
         sut.delete("/v1/resource/{resource_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -173,9 +173,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticHeadRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("HEAD")
-                .uri("/v1/resource")
+                .path("/v1/resource")
                 .build();
         sut.head("/v1/resource", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -185,9 +185,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicHeadRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("HEAD")
-                .uri("/v1/resource/1234")
+                .path("/v1/resource/1234")
                 .build();
         sut.head("/v1/resource/{resource_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -203,9 +203,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticConnectRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("CONNECT")
-                .uri("/v1/resource")
+                .path("/v1/resource")
                 .build();
         sut.connect("/v1/resource", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -215,9 +215,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicConnectRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("CONNECT")
-                .uri("/v1/resource/1234")
+                .path("/v1/resource/1234")
                 .build();
         sut.connect("/v1/resource/{resource_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -233,9 +233,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticOptionsRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("OPTIONS")
-                .uri("/v1/resource")
+                .path("/v1/resource")
                 .build();
         sut.options("/v1/resource", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -245,9 +245,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicOptionsRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("OPTIONS")
-                .uri("/v1/resource/1234")
+                .path("/v1/resource/1234")
                 .build();
         sut.options("/v1/resource/{resource_id}", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -263,9 +263,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchStaticTraceRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("TRACE")
-                .uri("/v1/resource")
+                .path("/v1/resource")
                 .build();
         sut.trace("/v1/resource", NOOP_HANDLER);
         final var result = sut.match(req);
@@ -275,9 +275,9 @@ public class SimpleRouterTest {
 
     @Test
     void shouldMatchDynamicTraceRoute() throws NoHandlerFoundException {
-        final var req = HttpRequest.newBuilder()
+        final var req = MiniHttpRequest.newBuilder()
                 .method("TRACE")
-                .uri("/v1/resource/1234")
+                .path("/v1/resource/1234")
                 .build();
         sut.trace("/v1/resource/{resource_id}", NOOP_HANDLER);
         final var result = sut.match(req);

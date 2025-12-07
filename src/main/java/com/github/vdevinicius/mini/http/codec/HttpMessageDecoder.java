@@ -1,6 +1,6 @@
 package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
 import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 
 // TODO: Remove wildcard imports
@@ -26,13 +26,13 @@ public final class HttpMessageDecoder {
         this.acc = new ByteArrayOutputStream();
     }
 
-    public HttpRequest read() throws IOException {
-        final var builder = HttpRequest.newBuilder();
+    public MiniHttpRequest read() throws IOException {
+        final var builder = MiniHttpRequest.newBuilder();
         readHeaders();
         final var headerBytes = acc.toByteArray();
         final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes), StandardCharsets.US_ASCII));
         final var requestLine = reader.readLine().split(" ");
-        builder.uri(requestLine[1])
+        builder.path(requestLine[1])
                 .version(requestLine[requestLine.length-1].split("/")[1]);
         final var headers = new HashMap<String, String>();
         var header = reader.readLine();

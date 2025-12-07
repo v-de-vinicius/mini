@@ -6,8 +6,9 @@ import java.util.Map;
 public class SimpleExceptionHandlerMatcher implements ExceptionHandlerMatcher<SimpleExceptionHandlerMatcher> {
 
     private final static ExceptionHandler<Throwable> DEFAULT_HANDLER = (throwable, req, res) -> {
-        res.writeBody("{ \"error\": \"%s\", \"timestamp\": \"%d\"}".formatted(throwable.getMessage(), System.currentTimeMillis()));
-        res.writeStatus(500);
+        res.setHeader("Content-Type", "application/json");
+        res.status(500);
+        res.body("{ \"error\": \"%s\", \"timestamp\": \"%d\"}".formatted(throwable.getMessage(), System.currentTimeMillis()));
     };
 
     private final Map<Class<? extends Throwable>, ExceptionHandler<? extends Throwable>> handlers = new HashMap<>();
