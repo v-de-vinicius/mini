@@ -33,14 +33,20 @@ public final class MiniHttpResponse implements HttpResponse {
         return this;
     }
 
-    public HttpResponseStatus getStatus() {
-        return this.responseStatus;
+    @Override
+    public Object getBody() {
+        return this.body;
     }
 
     @Override
     public HttpResponse status(int status) {
         this.responseStatus = HttpResponseStatus.fromInt(status);
         return this;
+    }
+
+    @Override
+    public HttpResponseStatus getStatus() {
+        return this.responseStatus;
     }
 
     @Override
@@ -54,7 +60,8 @@ public final class MiniHttpResponse implements HttpResponse {
         return this;
     }
 
-    public Map<String, String> getHeaders() {
+    @Override
+    public Map<String, String> headers() {
         return this.headers;
     }
 

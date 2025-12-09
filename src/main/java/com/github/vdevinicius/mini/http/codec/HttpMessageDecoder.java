@@ -1,5 +1,6 @@
 package com.github.vdevinicius.mini.http.codec;
 
+import com.github.vdevinicius.mini.http.core.HttpRequest;
 import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
 import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 
@@ -8,6 +9,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
+// TODO: Perhaps we should model decoder pipeline with the contributor pattern?
 public final class HttpMessageDecoder {
     private static final int MAX_HEADER_SIZE = 32 * 1024;
     private static final int MAX_BODY_SIZE = 32 * 1024;
@@ -26,7 +28,7 @@ public final class HttpMessageDecoder {
         this.acc = new ByteArrayOutputStream();
     }
 
-    public MiniHttpRequest read() throws IOException {
+    public HttpRequest read() throws IOException {
         final var builder = MiniHttpRequest.newBuilder();
         readHeaders();
         final var headerBytes = acc.toByteArray();

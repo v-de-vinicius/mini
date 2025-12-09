@@ -2,7 +2,7 @@ package com.github.vdevinicius.mini.http.router;
 
 import com.github.vdevinicius.mini.http.core.Handler;
 import com.github.vdevinicius.mini.http.core.HttpMethod;
-import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
 import com.github.vdevinicius.mini.http.exception.NoHandlerFoundException;
 
 import java.util.HashMap;
@@ -76,7 +76,7 @@ public class SimpleRouter implements MatchingRouter<SimpleRouter> {
     }
 
     @Override
-    public MatchedRoute match(MiniHttpRequest req) throws NoHandlerFoundException {
+    public MatchedRoute match(HttpRequest req) throws NoHandlerFoundException {
         // TODO: Normalize request URI (remove query params and fragments)
         final var key = new RouteKey(req.method(), req.path());
         var matchedRoute = tryMatchStatically(key);

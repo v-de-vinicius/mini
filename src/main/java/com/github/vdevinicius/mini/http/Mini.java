@@ -7,7 +7,6 @@ import com.github.vdevinicius.mini.http.core.ExceptionHandler;
 import com.github.vdevinicius.mini.http.core.ExceptionHandlerMatcher;
 import com.github.vdevinicius.mini.http.core.ExceptionHandlerRegistry;
 import com.github.vdevinicius.mini.http.core.Handler;
-import com.github.vdevinicius.mini.http.core.HttpMethod;
 import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
 import com.github.vdevinicius.mini.http.core.MiniHttpResponse;
 import com.github.vdevinicius.mini.http.core.SimpleExceptionHandlerMatcher;
@@ -19,13 +18,14 @@ import com.github.vdevinicius.mini.http.router.SimpleRouter;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.time.Clock;
-import java.util.Map;
 
 // TODO: Implement graceful shutdown
 public final class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> {
+
+    private static final HttpMessageEncoder HEAD_MESSAGE_ENCODER = new HeadMessageEncoder(Clock.systemUTC());
+
     private final MatchingRouter<?> router;
     private final ExceptionHandlerMatcher<?> exceptionHandlerMatcher;
-    private final Map<HttpMethod, HttpMessageEncoder> encoderMap = Map.of(HttpMethod.HEAD, new HeadMessageEncoder(Clock.systemUTC()));
 
     private int port = 8080;
 
@@ -112,18 +112,13 @@ public final class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> 
                     final var outputStream = socket.getOutputStream();
                     final var decoder = new HttpMessageDecoder(inputStream, 8192);
                     final var request = decoder.read();
-                    final var response = MiniHttpResponse.newBuilder().build();
+                    final var res = MiniHttpResponse.newBuilder().build();
                     try {
                         final var matchedRoute = this.router.match(request);
                         final var req = MiniHttpRequest.of(request, builder -> builder.matchedByRoute(matchedRoute.matchedUri()));
-                        matchedRoute.handler().handle(req, response);
-                        final var encoder = encoderMap.getOrDefault(request.method(), new HttpMessageEncoder() {
-                            @Override
-                            public byte[] encode(MiniHttpRequest req, MiniHttpResponse res) {
-                                return res.getBytes();
-                            }
-                        });
-                        outputStream.write(encoder.encode(req, response));
+                        matchedRoute.handler().handle(req, res);
+                        // Swap from single encoder to contributor pattern
+                        outputStream.write(HEAD_MESSAGE_ENCODER.encode(req, res));
                         outputStream.flush();
                     } catch (UnsupportedOperationException e) {
                         outputStream.write(MiniHttpResponse.newBuilder().status(501).body(e.getMessage()).build().getBytes());
@@ -136,8 +131,8 @@ public final class Mini implements Router<Mini>, ExceptionHandlerRegistry<Mini> 
                         outputStream.flush();
                     } catch (Throwable t) {
                         final var handler = exceptionHandlerMatcher.match(t);
-                        handler.handle(t, request, response);
-                        outputStream.write(response.getBytes());
+                        handler.handle(t, request, res);
+                        outputStream.write(res.getBytes());
                         outputStream.flush();
                     }
                 } catch (SocketTimeoutException e) {

@@ -1,8 +1,8 @@
 package com.github.vdevinicius.mini.http.codec;
 
-import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
-import com.github.vdevinicius.mini.http.core.MiniHttpResponse;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
+import com.github.vdevinicius.mini.http.core.HttpResponse;
 
 public interface HttpMessageEncoder {
-    byte[] encode(MiniHttpRequest req, MiniHttpResponse res);
+    byte[] encode(HttpRequest req, HttpResponse res);
 }

@@ -26,14 +26,14 @@ public final class MiniHttpRequest implements HttpRequest {
         this.body = body;
     }
 
-    public static MiniHttpRequest of(MiniHttpRequest req, Consumer<Builder> builderConsumer) {
+    public static MiniHttpRequest of(HttpRequest req, Consumer<Builder> builderConsumer) {
         final var builder = newBuilder()
-                .path(req.path)
-                .matchedByRoute(req.matchedByPath)
-                .method(req.method)
-                .version(req.version)
-                .headers(req.headers)
-                .body(req.body);
+                .path(req.path())
+                .matchedByRoute(req.matchedByPath())
+                .method(req.method())
+                .version(req.version())
+                .headers(req.headers())
+                .body(req.body());
         builderConsumer.accept(builder);
         return builder.build();
     }

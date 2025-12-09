@@ -1,6 +1,6 @@
 package com.github.vdevinicius.mini.http.exception;
 
-import com.github.vdevinicius.mini.http.core.MiniHttpRequest;
+import com.github.vdevinicius.mini.http.core.HttpRequest;
 
 import java.io.Serial;
 
@@ -9,13 +9,13 @@ public class NoHandlerFoundException extends Exception {
     @Serial
     private static final long serialVersionUID = 4817224146161094855L;
 
-    private final MiniHttpRequest req;
+    private final HttpRequest req;
 
-    public NoHandlerFoundException(MiniHttpRequest req) {
+    public NoHandlerFoundException(HttpRequest req) {
         this.req = req;
     }
 
-    public MiniHttpRequest request() {
+    public HttpRequest request() {
         return req;
     }
 }
