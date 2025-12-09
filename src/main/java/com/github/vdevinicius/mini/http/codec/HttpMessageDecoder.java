@@ -6,10 +6,14 @@ import com.github.vdevinicius.mini.http.exception.MalformedHttpMessageException;
 
 // TODO: Remove wildcard imports
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 
-// TODO: Perhaps we should model decoder pipeline with the contributor pattern?
+// TODO: Refactor decoder class with a ByteBuffer approach instead of a sequential InputStream
 public final class HttpMessageDecoder {
     private static final int MAX_HEADER_SIZE = 32 * 1024;
     private static final int MAX_BODY_SIZE = 32 * 1024;
@@ -17,6 +21,8 @@ public final class HttpMessageDecoder {
     private final byte[] buf;
     private final InputStream in;
     private final ByteArrayOutputStream acc;
+    private final ReadableByteChannel channel;
+    private final ByteBuffer byteBuf;
 
     private byte matchCount = 0;
     private byte lastReadByte = 0;
@@ -26,16 +32,41 @@ public final class HttpMessageDecoder {
         this.in = in;
         this.buf = new byte[bufferSize];
         this.acc = new ByteArrayOutputStream();
+        this.channel = Channels.newChannel(in);
+        this.byteBuf = ByteBuffer.allocate(bufferSize);
     }
 
     public HttpRequest read() throws IOException {
         final var builder = MiniHttpRequest.newBuilder();
-        readHeaders();
-        final var headerBytes = acc.toByteArray();
-        final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes), StandardCharsets.US_ASCII));
-        final var requestLine = reader.readLine().split(" ");
-        builder.path(requestLine[1])
-                .version(requestLine[requestLine.length-1].split("/")[1]);
+        final var contentLength = readHeaders(builder);
+        readBody(contentLength);
+        final var bodyBytes = new ByteArrayOutputStream();
+        bodyBytes.write(acc.toByteArray(), headerBytesReadAcc, contentLength);
+        builder.body(bodyBytes.toByteArray());
+        return builder.build();
+    }
+
+    private int readHeaders(MiniHttpRequest.Builder builder) throws IOException {
+        var doubleCRLFIndex = -1;
+        while (doubleCRLFIndex == -1) {
+            final var n = this.channel.read(this.byteBuf);
+            if (n == -1) {
+                throw new EOFException("EOF found before the end of headers (\r\n\r\n)");
+            }
+
+            this.byteBuf.flip();
+            final var limit = this.byteBuf.limit();
+            for (var i = 0; i <= limit - 4; i++) {
+                if (byteBuf.get(i) == 13 && byteBuf.get(i + 1) == 10 && byteBuf.get(i + 2) == 13 && byteBuf.get(i + 3) == 10) {
+                    doubleCRLFIndex = i + 4;
+                }
+            }
+        }
+
+        final var headerBuf = this.byteBuf.slice();
+        headerBuf.limit(doubleCRLFIndex);
+        final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBuf.array())));
+        final var requestLine = reader.readLine().split(" "); // Drop first line
         final var headers = new HashMap<String, String>();
         var header = reader.readLine();
         while (!header.isEmpty()) {
@@ -62,6 +93,8 @@ public final class HttpMessageDecoder {
         try {
             if (headers.containsKey("content-length")) {
                 contentLength = Integer.parseInt(headers.get("content-length"));
+            } else {
+                headers.put("content-length", "0");
             }
         } catch (NumberFormatException e) {
             throw new IllegalStateException("could not cast content-length header");
@@ -71,32 +104,13 @@ public final class HttpMessageDecoder {
             throw new IllegalStateException("negative content length is not allowed");
         }
 
-        builder.headers(headers);
+        builder
+                .method(requestLine[0])
+                .path(requestLine[1])
+                .version(requestLine[requestLine.length-1].split("/")[1])
+                .headers(headers);
 
-        readBody(contentLength);
-        final var bodyBytes = new ByteArrayOutputStream();
-        bodyBytes.write(acc.toByteArray(), headerBytesReadAcc, contentLength);
-        builder.method(requestLine[0]);
-        builder.body(bodyBytes.toByteArray());
-        return builder.build();
-    }
-
-    private void readHeaders() throws IOException {
-        var bodyStartIndex = -1;
-        while (bodyStartIndex == -1) {
-            final var n = this.in.read(this.buf);
-            if (n == -1) {
-                throw new EOFException("EOF found before the end of headers (\r\n\r\n)");
-            }
-
-            this.acc.write(this.buf, 0, n);
-
-            if (this.acc.size() > MAX_HEADER_SIZE) {
-                throw new MalformedHttpMessageException("Header size exceeded the maximum permitted size of 32KiB");
-            }
-
-            bodyStartIndex = indexOfCRLFCRLF(n);
-        }
+        return contentLength;
     }
 
     private void readBody(int contentLength) throws IOException {
