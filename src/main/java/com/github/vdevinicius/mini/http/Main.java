@@ -7,6 +7,7 @@ public class Main {
         Mini.newServer()
                 .port(8080)
                 .head("/ping", (req, res) -> res.status(204))
+                .post("/graphql", (req, res) -> res.body(req.body()))
                 .get("/produce/{id}", (req, res) -> {
                     final var body = new MyObject();
                     body.a = "bar";

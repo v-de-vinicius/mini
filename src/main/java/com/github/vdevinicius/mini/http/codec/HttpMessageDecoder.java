@@ -9,18 +9,12 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 
 // TODO: Refactor decoder class with a ByteBuffer approach instead of a sequential InputStream
 public final class HttpMessageDecoder {
-    private static final int MAX_HEADER_SIZE = 32 * 1024;
     private static final int MAX_BODY_SIZE = 32 * 1024;
 
-    private final byte[] buf;
-    private final InputStream in;
-    private final ByteArrayOutputStream acc;
     private final ReadableByteChannel channel;
     private final ByteBuffer byteBuf;
 
@@ -29,24 +23,18 @@ public final class HttpMessageDecoder {
     private int headerBytesReadAcc = 0;
 
     public HttpMessageDecoder(InputStream in, int bufferSize) {
-        this.in = in;
-        this.buf = new byte[bufferSize];
-        this.acc = new ByteArrayOutputStream();
         this.channel = Channels.newChannel(in);
         this.byteBuf = ByteBuffer.allocate(bufferSize);
     }
 
     public HttpRequest read() throws IOException {
         final var builder = MiniHttpRequest.newBuilder();
-        final var contentLength = readHeaders(builder);
-        readBody(contentLength);
-        final var bodyBytes = new ByteArrayOutputStream();
-        bodyBytes.write(acc.toByteArray(), headerBytesReadAcc, contentLength);
-        builder.body(bodyBytes.toByteArray());
-        return builder.build();
+        final var tuple = readHeaders(builder);
+        final var bodyBytes = readBody(tuple[1], tuple[0]);
+        return builder.body(bodyBytes).build();
     }
 
-    private int readHeaders(MiniHttpRequest.Builder builder) throws IOException {
+    private int[] readHeaders(MiniHttpRequest.Builder builder) throws IOException {
         var doubleCRLFIndex = -1;
         while (doubleCRLFIndex == -1) {
             final var n = this.channel.read(this.byteBuf);
@@ -66,7 +54,7 @@ public final class HttpMessageDecoder {
         final var headerBuf = this.byteBuf.slice();
         headerBuf.limit(doubleCRLFIndex);
         final var reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBuf.array())));
-        final var requestLine = reader.readLine().split(" "); // Drop first line
+        final var requestLine = reader.readLine().split(" ");
         final var headers = new HashMap<String, String>();
         var header = reader.readLine();
         while (!header.isEmpty()) {
@@ -110,59 +98,26 @@ public final class HttpMessageDecoder {
                 .version(requestLine[requestLine.length-1].split("/")[1])
                 .headers(headers);
 
-        return contentLength;
+        return new int[]{contentLength, doubleCRLFIndex};
     }
 
-    private void readBody(int contentLength) throws IOException {
+    private byte[] readBody(int doubleCRLFIndex, int contentLength) throws IOException {
         if (contentLength <= 0) {
-            return;
+            return null;
         }
 
         if (contentLength >= MAX_BODY_SIZE) {
             throw new MalformedHttpMessageException("Body size exceeded the maximum permitted size of 32KiB");
         }
 
-        final var already = acc.size() - headerBytesReadAcc;
-        var remaining = contentLength - already;
+        this.byteBuf.position(doubleCRLFIndex);
+        final var bytesRead = this.byteBuf.limit() - this.byteBuf.position();
+        var remaining = contentLength - bytesRead;
         while (remaining > 0) {
-            final var n = this.in.read(this.buf, 0, Math.min(this.buf.length, remaining));
-            this.acc.write(this.buf, 0, n);
-
-            if (this.acc.size() >= MAX_BODY_SIZE) {
-                throw new MalformedHttpMessageException("Body size exceeded the maximum permitted size of 32KiB");
-            }
-
-            remaining -= n;
-        }
-    }
-
-    private int indexOfCRLFCRLF(int bytesRead) {
-        if (bytesRead <= 0) {
-            return -1;
+            int readBytes = this.channel.read(this.byteBuf);
+            remaining -= readBytes;
         }
 
-        for (byte currByte : this.buf) {
-            if (matchCount == 4) {
-                return headerBytesReadAcc;
-            }
-
-            headerBytesReadAcc += 1;
-            // If the current byte isn't \r nor \n, proceed to the next iteration.
-            if (currByte != 13 && currByte != 10) {
-                matchCount = 0;
-                lastReadByte = 0;
-                continue;
-            }
-
-            if (lastReadByte == 13 && currByte != 10) {
-                matchCount = 0;
-                continue;
-            }
-
-            lastReadByte = currByte;
-            matchCount += 1;
-        }
-
-        return -1;
+        return this.byteBuf.slice().array();
     }
 }
